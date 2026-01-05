@@ -2,7 +2,7 @@ name: Deploy Azodha to EKS
 on:
   push:
     branches:
-      - IAC
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
         run: kubectl apply -f k8s/pv.yaml
 
       - name: Deploy OpenTelemetry
-        run: kubectl apply -f k8s/opentelemetry/
+        run: kubectl apply -f k8s/opentelemetry.yaml
 
       - name: Deploy Application
         run: kubectl apply -f k8s/deployment.yaml
