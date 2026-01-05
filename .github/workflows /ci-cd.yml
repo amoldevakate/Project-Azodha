@@ -2,14 +2,14 @@ name: CI-CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
 
 jobs:
   build-test-scan-deploy:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: devakate/project-azodha
+      IMAGE_NAME: amoldevakate2026/azodha.run.place
       IMAGE_TAG: ${{ github.sha }}
 
     steps:
@@ -87,7 +87,7 @@ jobs:
     # -------------------------
     - name: Deploy to EKS
       run: |
-        aws eks update-kubeconfig --name predict-eks --region us-east-1
-        kubectl set image deployment/predict-api \
-          predict-api=$IMAGE_NAME:$IMAGE_TAG
-        kubectl rollout status deployment/predict-api
+        aws eks update-kubeconfig --name EKS_CLOUD --region us-east-1
+        kubectl set image deployment/azodha-project \
+          azodha-project=$IMAGE_NAME:$IMAGE_TAG
+        kubectl rollout status deployment/azodha-project
