@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: project-azodha
-        image: devakate/project-azodha:latest
+        image: amoldevakate2026/azodha.run.place:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
