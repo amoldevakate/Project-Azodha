@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: predict-api
+  name: project-azodha
 spec:
   replicas: 2
   strategy:
@@ -11,15 +11,15 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: predict-api
+      app: project-azodha
   template:
     metadata:
       labels:
-        app: predict-api
+        app: project-azodha
     spec:
       containers:
-      - name: predict-api
-        image: <ECR_REPOSITORY_URL>:latest
+      - name: project-azodha
+        image: devakate/project-azodha:latest
         ports:
         - containerPort: 8000
         resources:
@@ -31,11 +31,11 @@ spec:
             memory: "512Mi"
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/health
             port: 8000
           initialDelaySeconds: 15
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/health
             port: 8000
           initialDelaySeconds: 5
