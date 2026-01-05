@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: project-azodha
+  namespace: azodha-dev
 spec:
   replicas: 2
   strategy:
@@ -20,8 +21,22 @@ spec:
       containers:
       - name: project-azodha
         image: devakate/project-azodha:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
+
+        env:
+        - name: OTEL_SERVICE_NAME
+          value: "project-azodha"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector.monitoring:4317"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+
+        volumeMounts:
+        - name: app-storage
+          mountPath: /app/data
+
         resources:
           requests:
             cpu: "100m"
@@ -29,13 +44,22 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
+
         livenessProbe:
           httpGet:
             path: /health
             port: 8000
-          initialDelaySeconds: 15
+          initialDelaySeconds: 20
+          periodSeconds: 10
+
         readinessProbe:
           httpGet:
             path: /health
             port: 8000
-          initialDelaySeconds: 5
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+      volumes:
+      - name: app-storage
+        persistentVolumeClaim:
+          claimName: azodha-pvc
