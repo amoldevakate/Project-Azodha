@@ -50,7 +50,7 @@ jobs:
         run: kubectl apply -f k8s/pv.yaml
 
       - name: Deploy OpenTelemetry
-        run: kubectl apply -f k8s/opentelemetry.yaml
+        run: kubectl apply -f k8s/otel.yaml
 
       - name: Deploy Application
         run: kubectl apply -f k8s/deployment.yaml
