@@ -8,7 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: azodha.run.place
+  - host: https://azodha.run.place
     http:
       paths:
       - path: /
