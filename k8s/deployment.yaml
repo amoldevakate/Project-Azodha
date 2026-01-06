@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: project-azodha
   namespace: azodha-dev
+  labels: project-azodha
 spec:
   replicas: 2
   strategy:
@@ -57,7 +58,7 @@ spec:
             path: /health
             port: 8000
           initialDelaySeconds: 10
-          periodSeconds: 5
+          periodSeconds: 10
 
       volumes:
       - name: app-storage
