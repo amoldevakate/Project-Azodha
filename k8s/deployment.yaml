@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: project-azodha
   namespace: azodha-dev
-  labels: project-azodha
+  labels:
+    app: project-azodha
 spec:
   replicas: 2
   strategy:
@@ -20,47 +21,49 @@ spec:
         app: project-azodha
     spec:
       containers:
-      - name: project-azodha
-        image: amoldevakate2026/azodha.run.place:IMAGE_TAG
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8000
+        - name: project-azodha
+          image: amoldevakate2026/azodha.run.place:IMAGE_TAG
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
 
-        env:
-        - name: OTEL_SERVICE_NAME
-          value: "project-azodha"
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://otel-collector.monitoring:4317"
-        - name: OTEL_TRACES_EXPORTER
-          value: "otlp"
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: "project-azodha"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4317"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
 
-        volumeMounts:
-        - name: app-storage
-          mountPath: /app/data
+          volumeMounts:
+            - name: app-storage
+              mountPath: /app/data
 
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "500m"
-            memory: "512Mi"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 20
-          periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
 
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            
       volumes:
-      - name: app-storage
-        persistentVolumeClaim:
-          claimName: azodha-pvc
+        - name: app-storage
+          persistentVolumeClaim:
+            claimName: azodha-pvc
