@@ -99,7 +99,7 @@ jobs:
           --name $CLUSTER_NAME \
           --region $AWS_REGION
 
-        sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/deployment.yaml
+        sed -i "s/IMAGE_TAG/${IMAGE_TAG}/g" k8s/deployment.yaml
 
         kubectl apply -f k8s/namespace.yaml -n $NAMESPACE
         kubectl apply -f k8s/pv.yaml -n $NAMESPACE
