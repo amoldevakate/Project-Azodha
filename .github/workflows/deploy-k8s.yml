@@ -15,6 +15,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-1
       CLUSTER_NAME: EKS_CLOUD
+      NAMESPACE: azodha-dev
 
     steps:
       - name: Checkout repository
@@ -44,22 +45,22 @@ jobs:
       # -------- APPLY MANIFESTS IN CORRECT ORDER --------
 
       - name: Apply Persistent Volume / PVC
-        run: kubectl apply -f k8s/pv.yaml
+        run: kubectl apply -f k8s/pv.yaml -n $NAMESPACE
 
       - name: Deploy OpenTelemetry
-        run: kubectl apply -f k8s/otel.yaml
+        run: kubectl apply -f k8s/otel.yaml -n $NAMESPACE
 
       - name: Deploy Application
-        run: kubectl apply -f k8s/deployment.yaml
+        run: kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
 
       - name: Deploy Service
-        run: kubectl apply -f k8s/service.yaml
+        run: kubectl apply -f k8s/service.yaml -n $NAMESPACE
 
       - name: Deploy HPA
-        run: kubectl apply -f k8s/HorizontalPodAutoscaler.yaml
+        run: kubectl apply -f k8s/HorizontalPodAutoscaler.yaml -n $NAMESPACE
 
       - name: Deploy Ingress
-        run: kubectl apply -f k8s/ingress.yaml
+        run: kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
 
       - name: Verify Deployment
         run: |
