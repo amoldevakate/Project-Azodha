@@ -101,7 +101,6 @@ jobs:
 
         sed -i "s/IMAGE_TAG/${IMAGE_TAG}/g" k8s/deployment.yaml
 
-        kubectl apply -f k8s/namespace.yaml -n $NAMESPACE
         kubectl apply -f k8s/pv.yaml -n $NAMESPACE
         kubectl apply -f k8s/pvc.yaml -n $NAMESPACE
         kubectl apply -f k8s/service.yaml -n $NAMESPACE
