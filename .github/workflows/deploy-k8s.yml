@@ -43,9 +43,6 @@ jobs:
 
       # -------- APPLY MANIFESTS IN CORRECT ORDER --------
 
-      - name: Apply Namespace
-        run: kubectl apply -f k8s/namespace.yaml
-
       - name: Apply Persistent Volume / PVC
         run: kubectl apply -f k8s/pv.yaml
 
