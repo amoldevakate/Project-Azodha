@@ -96,7 +96,6 @@ jobs:
           kubectl apply -f k8s/pvc.yaml -n $NAMESPACE
 
           # OpenTelemetry
-          kubectl apply -f k8s/otel-config.yaml -n $NAMESPACE
           kubectl apply -f k8s/otel.yaml -n $NAMESPACE
 
           # App + service
