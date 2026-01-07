@@ -45,7 +45,7 @@ jobs:
       # -------- APPLY MANIFESTS IN CORRECT ORDER --------
 
       - name: Apply Persistent Volume / PVC
-        run: kubectl apply -f k8s/pv.yaml -n $NAMESPACE
+        run: kubectl apply -f k8s/pvc.yaml -n $NAMESPACE
 
       - name: Deploy OpenTelemetry
         run: kubectl apply -f k8s/otel.yaml -n $NAMESPACE
