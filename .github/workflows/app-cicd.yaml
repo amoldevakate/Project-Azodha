@@ -6,6 +6,11 @@ on:
     branches: [ dev ]
   workflow_dispatch:
 
+# Prevent overlapping deployments on quick successive pushes
+concurrency:
+  group: azodha-dev-deploy
+  cancel-in-progress: true
+
 jobs:
   build-test-scan-deploy:
     runs-on: ubuntu-latest
@@ -20,10 +25,15 @@ jobs:
       CONTAINER_NAME: project-azodha
 
     steps:
+      # ------------------------------------------------
+      # 1) Checkout
+      # ------------------------------------------------
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # --- Python setup + tests ---
+      # ------------------------------------------------
+      # 2) Python Setup + Unit Tests
+      # ------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,31 +41,41 @@ jobs:
 
       - name: Install dependencies and run unit tests
         run: |
+          set -euxo pipefail
           python -m pip install --upgrade pip
           pip install -r app/requirements.txt
           pytest app/
 
-      # --- SonarQube scan ---
+      # ------------------------------------------------
+      # 3) SonarQube Scan
+      # ------------------------------------------------
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # --- Docker login ---
+      # ------------------------------------------------
+      # 4) Docker Login
+      # ------------------------------------------------
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # --- Build docker image ---
+      # ------------------------------------------------
+      # 5) Build Docker Image
+      # ------------------------------------------------
       - name: Build Docker image
         run: |
+          set -euxo pipefail
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
           docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
 
-      # --- Trivy scan ---
+      # ------------------------------------------------
+      # 6) Trivy Image Scan (fail build on HIGH/CRITICAL)
+      # ------------------------------------------------
       - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -64,13 +84,18 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
 
-      # --- Push docker image ---
+      # ------------------------------------------------
+      # 7) Push Docker Image
+      # ------------------------------------------------
       - name: Push Docker image
         run: |
+          set -euxo pipefail
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-      # --- AWS credentials ---
+      # ------------------------------------------------
+      # 8) Configure AWS Credentials
+      # ------------------------------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -78,40 +103,57 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # --- kubectl install ---
+      # ------------------------------------------------
+      # 9) Install kubectl
+      # ------------------------------------------------
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
           version: v1.29.0
 
-      # --- Deploy to EKS ---
+      # ------------------------------------------------
+      # 10) Deploy to EKS
+      # ------------------------------------------------
       - name: Deploy to EKS
         run: |
-          aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+          set -euxo pipefail
 
-          # Ensure namespace exists
+          aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
+
+          # ---------- Apply manifests (correct order) ----------
+
+          # Namespace (cluster-scoped)
           kubectl apply -f k8s/namespace.yaml
 
-          # Storage (PVC)
-          kubectl apply -f k8s/pvc.yaml -n $NAMESPACE
+          # Storage
+          kubectl apply -n "$NAMESPACE" -f k8s/pvc.yaml
 
-          # OpenTelemetry
-          kubectl apply -f k8s/otel.yaml -n $NAMESPACE
+          # OpenTelemetry (make sure these files exist in repo)
+          kubectl apply -n "$NAMESPACE" -f k8s/otel-config.yaml
+          kubectl apply -n "$NAMESPACE" -f k8s/otel.yaml
+          kubectl apply -n "$NAMESPACE" -f k8s/otel-service.yaml
 
-          # App + service
-          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
-          kubectl apply -f k8s/service.yaml -n $NAMESPACE
+          # App + Service
+          kubectl apply -n "$NAMESPACE" -f k8s/deployment.yaml
+          kubectl apply -n "$NAMESPACE" -f k8s/service.yaml
 
-          # Update the image to current SHA (no sed required)
-          kubectl set image deployment/$DEPLOYMENT_NAME \
-            $CONTAINER_NAME=$IMAGE_NAME:$IMAGE_TAG \
-            -n $NAMESPACE
+          # Update deployment image to current SHA (no sed)
+          kubectl set image -n "$NAMESPACE" deployment/"$DEPLOYMENT_NAME" \
+            "$CONTAINER_NAME"="$IMAGE_NAME:$IMAGE_TAG"
 
-          # Autoscaler + Ingress
-          kubectl apply -f k8s/HorizontalPodAutoscaler.yaml -n $NAMESPACE
-          kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
+          # HPA
+          kubectl apply -n "$NAMESPACE" -f k8s/HorizontalPodAutoscaler.yaml
 
-          kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
-          kubectl get all -n $NAMESPACE
-          kubectl get ingress -n $NAMESPACE
-          kubectl get hpa -n $NAMESPACE
+          # Ingress - debug + validate before apply (prevents "name may not be empty")
+          echo "----- k8s/ingress.yaml -----"
+          cat k8s/ingress.yaml
+          echo "----------------------------"
+
+          kubectl apply --dry-run=client -f k8s/ingress.yaml -o yaml
+          kubectl apply -n "$NAMESPACE" -f k8s/ingress.yaml
+
+          # ---------- Verification ----------
+          kubectl rollout status -n "$NAMESPACE" deployment/"$DEPLOYMENT_NAME"
+          kubectl get all -n "$NAMESPACE"
+          kubectl get ingress -n "$NAMESPACE"
+          kubectl get hpa -n "$NAMESPACE"
