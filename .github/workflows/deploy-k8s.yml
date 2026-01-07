@@ -50,8 +50,8 @@ jobs:
       - name: Deploy OpenTelemetry
         run: kubectl apply -f k8s/otel.yaml -n $NAMESPACE
 
-      - name: Deploy Application
-        run: kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+#      - name: Deploy Application
+#        run: kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
 
       - name: Deploy Service
         run: kubectl apply -f k8s/service.yaml -n $NAMESPACE
