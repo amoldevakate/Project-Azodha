@@ -1,6 +1,10 @@
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-spec:metadata:
+metadata:
+  name: project-azodha-ingress
+  namespace: azodha-dev
+spec:
   ingressClassName: nginx
   rules:
     - host: azodha.run.place
@@ -13,6 +17,3 @@ spec:metadata:
                 name: project-azodha
                 port:
                   number: 80
-  name: project-azodha-ingress
-  namespace: azodha-dev
-
