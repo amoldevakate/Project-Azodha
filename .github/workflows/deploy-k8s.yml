@@ -57,10 +57,10 @@ jobs:
         run: kubectl apply -f k8s/service.yaml -n $NAMESPACE
 
       - name: Deploy HPA
-        run: kubectl apply -f k8s/HorizontalPodAutoscaler.yaml -n $NAMESPACE
+        run: kubectl apply -f k8s/HorizontalPodAutoscaler.yaml
 
       - name: Deploy Ingress
-        run: kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
+        run: kubectl apply -f k8s/ingress.yaml
 
       - name: Verify Deployment
         run: |
