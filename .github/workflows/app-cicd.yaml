@@ -108,7 +108,7 @@ jobs:
             -n $NAMESPACE
 
           # Autoscaler + Ingress
-          kubectl apply -f k8s/HorizontalPodAutoscaler.yaml $NAMESPACE
+          kubectl apply -f k8s/HorizontalPodAutoscaler.yaml -n $NAMESPACE
           kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
 
           kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
