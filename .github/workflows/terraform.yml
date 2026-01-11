@@ -37,3 +37,6 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/IAC'
         run: terraform apply -auto-approve
+
+      - name: Terraform Destory
+        run: terraform destroy
